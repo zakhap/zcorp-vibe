@@ -1,103 +1,200 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
+import { ConnectButton } from '@/components/ConnectButton';
+import { useZCORPBalance } from '@/hooks/useZCORPBalance';
+import { TokenLaunchForm } from '@/components/TokenLaunchForm';
+import { UserDashboard } from '@/components/UserDashboard';
+import { ClientOnly } from '@/components/ClientOnly';
+import { StatusBar, type ConnectionStatus } from '@/components/StatusBar';
+import { DisabledOverlay } from '@/components/DisabledOverlay';
+import { ChainInfo } from '@/components/ChainInfo';
+
+// Loading component
+function LoadingPage() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      <header className="border-b bg-white/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">Z</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">ZCORP Token Launcher</h1>
+              <p className="text-sm text-gray-600">Deploy tokens as ZCORP (Demo Mode - WETH)</p>
+            </div>
+          </div>
+          <div className="w-32 h-10 bg-gray-200 animate-pulse rounded-lg"></div>
+        </div>
+      </header>
+      <main className="container mx-auto px-4 py-8">
+        <div className="max-w-2xl mx-auto text-center">
+          <div className="bg-white rounded-2xl shadow-lg p-8">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading ZCORP Token Launcher...</p>
+          </div>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
+    </div>
+  );
+}
+
+// Main app component that uses wagmi
+function MainApp() {
+  const { address, isConnected, isQualified, formattedBalance, symbol, isLoading, error, refetch } = useZCORPBalance();
+
+  // Determine connection status for StatusBar
+  const getConnectionStatus = (): ConnectionStatus => {
+    if (error) return 'error';
+    if (!isConnected) return 'disconnected';
+    if (isLoading) return 'connected-loading';
+    if (!isQualified) return 'connected-unqualified';
+    return 'connected-qualified';
+  };
+
+  const connectionStatus = getConnectionStatus();
+  const isFormDisabled = !isConnected || !isQualified;
+  const isDashboardLimited = !isConnected;
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Header */}
+      <header className="border-b bg-white/80 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
+          <div className="flex items-center space-x-4">
+            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+              <span className="text-white font-bold text-lg">Z</span>
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">ZCORP Token Launcher</h1>
+              <p className="text-sm text-gray-600">Deploy tokens as ZCORP (Demo Mode - WETH)</p>
+            </div>
+          </div>
+          <div className="flex items-center space-x-3">
+            <ChainInfo />
+            <ConnectButton />
+          </div>
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8 space-y-8">
+        {/* Welcome Section */}
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full mx-auto mb-6 flex items-center justify-center">
+            <span className="text-white font-bold text-2xl">Z</span>
+          </div>
+          <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            Welcome to ZCORP Token Launcher
+          </h2>
+          <p className="text-lg text-gray-600 mb-8 max-w-2xl mx-auto">
+            A token-gated platform for ZCORP holders to deploy new tokens with the power and branding of ZCORP.
+          </p>
+        </div>
+
+        {/* Dynamic Status Bar */}
+        <StatusBar 
+          status={connectionStatus}
+          balance={formattedBalance}
+          symbol={symbol}
+          minRequired="0.01"
+          error={error?.message}
+          onRetry={refetch}
+          address={address}
+        />
+
+        {/* Info Sections */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Demo Mode Info */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+            <h3 className="font-semibold text-blue-900 mb-3 flex items-center">
+              <span className="mr-2">🚀</span>
+              Demo Mode
+            </h3>
+            <p className="text-sm text-blue-800 mb-3">
+              This demo uses WETH (Wrapped Ethereum) on Base instead of ZCORP tokens. 
+              You need at least 0.01 WETH to test the platform.
+            </p>
+            <a 
+              href="https://app.uniswap.org" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-700 hover:text-blue-900 text-sm font-medium underline"
+            >
+              Get WETH on Uniswap →
+            </a>
+          </div>
+
+          {/* How It Works */}
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-6">
+            <h3 className="font-semibold text-gray-900 mb-3">How it works:</h3>
+            <div className="space-y-2">
+              <div className="flex items-center space-x-2 text-sm text-gray-700">
+                <span className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center text-xs font-semibold text-blue-600">1</span>
+                <span>Connect wallet & verify WETH balance</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-700">
+                <span className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center text-xs font-semibold text-blue-600">2</span>
+                <span>Configure token parameters</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-700">
+                <span className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center text-xs font-semibold text-blue-600">3</span>
+                <span>Sign & deploy as ZCORP</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Content Grid - Always Visible */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Token Launch Form */}
+          <div className="lg:col-span-2">
+            <DisabledOverlay
+              isDisabled={isFormDisabled}
+              reason={
+                !isConnected 
+                  ? "Connect your wallet to start deploying tokens"
+                  : !isQualified 
+                    ? `You need at least 0.01 ${symbol} to deploy tokens`
+                    : "Form is currently unavailable"
+              }
+              action={
+                !isConnected 
+                  ? undefined
+                  : !isQualified 
+                    ? { text: 'Get WETH', href: 'https://app.uniswap.org' }
+                    : undefined
+              }
+            >
+              <TokenLaunchForm />
+            </DisabledOverlay>
+          </div>
+
+          {/* User Dashboard */}
+          <div className="lg:col-span-1">
+            <UserDashboard 
+              isLimited={isDashboardLimited}
+              address={address}
+            />
+          </div>
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="border-t bg-white/80 backdrop-blur-sm mt-16">
+        <div className="container mx-auto px-4 py-6 text-center text-gray-600">
+          <p>&copy; 2024 ZCORP Token Launcher. Powered by Clanker SDK.</p>
+        </div>
       </footer>
     </div>
+  );
+}
+
+// Export wrapped component
+export default function Home() {
+  return (
+    <ClientOnly fallback={<LoadingPage />}>
+      <MainApp />
+    </ClientOnly>
   );
 }
